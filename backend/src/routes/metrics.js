@@ -4,7 +4,36 @@ const router = Router();
 
 /**
  * @swagger
- * /metrics/bugs_by_severity:
+ * /api/metrics/bugs_by_severity:
+ *   get:
+ *     summary: Get count of open bugs by severity
+ *     tags: [Metrics]
+ *     parameters:
+ *       - in: query
+ *         name: project
+ *         schema:
+ *           type: string
+ *         description: Azure DevOps project name (defaults to ADO_DEFAULT_PROJECT)
+ *     responses:
+ *       200:
+ *         description: Bug counts grouped by severity
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 project:
+ *                   type: string
+ *                 counts:
+ *                   type: object
+ *                   additionalProperties:
+ *                     type: integer
+ *       400:
+ *         description: Missing project name
+ *       401:
+ *         description: Unauthorized - Invalid ADO credentials
+ *       500:
+ *         description: Server error
  */
 router.get('/bugs_by_severity', async (req, res, next) => {
   try {
@@ -14,14 +43,21 @@ router.get('/bugs_by_severity', async (req, res, next) => {
     const { default: axios } = await import('axios');
 
     const API = '7.1'; // drop -preview.1
-    const org = process.env.ADO_ORG_NAME;
+    const orgUrl = process.env.ADO_ORG_URL;
+    if (!orgUrl) throw new Error('Missing ADO_ORG_URL environment variable');
+    
     const pat = process.env.ADO_PAT;
+    if (!pat) throw new Error('Missing ADO_PAT environment variable');
+    
     const auth = Buffer.from(':' + pat).toString('base64');
+    
+    // Extract org name from URL
+    const org = orgUrl.split('/').pop();
 
     const severityField = process.env.ADO_FIELD_SEVERITY || 'Microsoft.VSTS.Common.Severity';
     const BATCH_SIZE = 200;
 
-    // Build WIQL: open bugs in this project
+    // Build WIQL: open bugs in this projectv
     const wiql = `
       SELECT [System.Id]
       FROM workitems
@@ -77,6 +113,13 @@ router.get('/bugs_by_severity', async (req, res, next) => {
 
     res.json({ project, counts });
   } catch (e) {
+    console.error('Error in bugs_by_severity:', e.message);
+    if (e.response?.status === 401) {
+      return res.status(401).json({ error: 'Unauthorized - Check your ADO credentials' });
+    }
+    if (e.response?.status === 404) {
+      return res.status(404).json({ error: 'Project not found or no access' });
+    }
     next(e);
   }
 });
