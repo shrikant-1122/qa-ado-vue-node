@@ -1,0 +1,10 @@
+{
+  "name": "qa-ado-vue-node-root",
+  "private": true,
+  "scripts": {
+    "dev": "npm run dev --prefix ./backend"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.2"
+  }
+}
