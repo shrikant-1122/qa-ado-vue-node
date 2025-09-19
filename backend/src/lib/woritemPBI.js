@@ -34,7 +34,7 @@ export async function getPbisByIterationAndQA(orgName, project, patToken, iterat
 
   // 2. Batch get work items details (max 200 per batch)
   const fields =
-    'System.Id,System.Title,Microsoft.VSTS.Common.Priority,Custom.TargetedRelease,Custom.AssignQA';
+    'System.Id,System.Title,System.State,Microsoft.VSTS.Common.Priority,Custom.TargetedRelease,Custom.AssignQA';
   const workItemsUrl = `https://dev.azure.com/${orgName}/_apis/wit/workitemsbatch?api-version=7.0`;
 
   const chunkSize = 200;
@@ -61,6 +61,7 @@ export async function getPbisByIterationAndQA(orgName, project, patToken, iterat
     .map((wi) => ({
       id: wi.id,
       title: wi.fields['System.Title'],
+      state: wi.fields['System.State'],
       priority: wi.fields['Microsoft.VSTS.Common.Priority'],
       targetedRelease: wi.fields['Custom.TargetedRelease'],
       assignQA: wi.fields['Custom.AssignQA'],
@@ -106,6 +107,7 @@ export async function getTasksByIterationAndQA(
   const fields = [
     "System.Id",
     "System.Title",
+    "System.State",
     "System.AssignedTo",
     "Microsoft.VSTS.Scheduling.CompletedWork",
     "Microsoft.VSTS.Scheduling.RemainingWork",
@@ -142,6 +144,7 @@ export async function getTasksByIterationAndQA(
       return {
         id: wi.id,
         title: wi.fields["System.Title"],
+        state: wi.fields["System.State"],
         assignQA: assignedTo?.displayName || assignedTo?.uniqueName || null,
         completedWork: wi.fields["Microsoft.VSTS.Scheduling.CompletedWork"] ?? 0,
         remainingWork: wi.fields["Microsoft.VSTS.Scheduling.RemainingWork"] ?? 0,

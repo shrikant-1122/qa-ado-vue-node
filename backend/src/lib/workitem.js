@@ -62,6 +62,7 @@ export async function getBugsByIterationAndQA(
   const fields = [
     'System.Id',
     'System.Title',
+    'System.State',
     'Microsoft.VSTS.Common.Severity',
     'Microsoft.VSTS.Common.Priority',
     'Custom.TargetedRelease',
@@ -96,6 +97,7 @@ export async function getBugsByIterationAndQA(
     .map((wi) => ({
       id: wi.id,
       title: wi.fields['System.Title'],
+      state: wi.fields['System.State'],
       severity: wi.fields['Microsoft.VSTS.Common.Severity'],
       priority: wi.fields['Microsoft.VSTS.Common.Priority'],
       targetedRelease: wi.fields['Custom.TargetedRelease'],
